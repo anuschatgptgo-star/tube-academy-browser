@@ -1,0 +1,70 @@
+name: Build Tube Academy Browser (Windows)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TARGET: x86_64-pc-windows-msvc
+  STABLE_RELEASE: "true"
+  NEXT_PUBLIC_TURNSTILE: ""
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: "pnpm"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build donut-proxy sidecar (native)
+        working-directory: ./src-tauri
+        run: cargo build --bin donut-proxy --release
+
+      - name: Build Tauri app (NSIS installer)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET: x86_64-pc-windows-msvc
+          NEXT_PUBLIC_TURNSTILE: ""
+        with:
+          projectPath: ./src-tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: "Tube Academy Browser ${{ github.ref_name }}"
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload installer as artifact (backup)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tube-academy-browser-setup
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: warn
