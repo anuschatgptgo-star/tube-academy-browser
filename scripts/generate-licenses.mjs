@@ -172,7 +172,7 @@ function generateInventory() {
   const pnpmReport = JSON.parse(
     commandOutput("pnpm", [
       "--filter",
-      "donutbrowser",
+      "tube-academy-browser",
       "licenses",
       "list",
       "--prod",
