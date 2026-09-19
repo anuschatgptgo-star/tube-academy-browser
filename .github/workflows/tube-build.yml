@@ -17,15 +17,15 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: "pnpm"
@@ -48,7 +48,7 @@ jobs:
         run: cargo build --bin donut-proxy --release
 
       - name: Build Tauri app (NSIS installer)
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET: x86_64-pc-windows-msvc
@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload installer as artifact (backup)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tube-academy-browser-setup
           path: |
